@@ -1,0 +1,242 @@
+import { useState } from "react";
+
+export default function Chatbot() {
+  const [messages, setMessages] = useState([
+    { sender: "bot", text: "Hi! How can we help you today?" }
+  ]);
+  const [input, setInput] = useState("");
+
+  const sendMessage = () => {
+    if (!input) return;
+    setMessages([...messages, { sender: "user", text: input }]);
+    setInput("");
+  };
+
+  return (
+    <div className="fixed bottom-6 right-6 bg-white border border-rtcGold rounded-lg w-72 shadow-lg p-4">
+      <h2 className="font-bold text-rtcBurgundy">RTC Chatbot</h2>
+      <div className="h-40 overflow-y-auto my-2 text-sm">
+        {messages.map((msg, i) => (
+          <div key={i} className={msg.sender === "bot" ? "text-rtcBurgundy" : "text-gray-700"}>
+            <strong>{msg.sender}:</strong> {msg.text}
+          </div>
+        ))}
+      </div>
+      <div className="flex">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          className="border p-2 flex-grow rounded-l-md text-sm"
+          placeholder="Type a message..."
+        />
+        <button onClick={sendMessage} className="bg-rtcGold text-white px-3 rounded-r-md">Send</button>
+      </div>
+    </div>
+  );
+}
+export default function Footer() {
+  return (
+    <footer className="bg-rtcBurgundy text-white py-6 text-center mt-12">
+      <p>&copy; {new Date().getFullYear()} Restore Their Childhood. All rights reserved.</p>
+    </footer>
+  );
+}
+import Link from "next/link";
+
+export default function Navbar() {
+  return (
+    <nav className="bg-rtcBurgundy text-white p-4 flex justify-between">
+      <h1 className="font-bold">RTC</h1>
+      <div className="space-x-4">
+        <Link href="/">Home</Link>
+        <Link href="/about">About</Link>
+        <Link href="/campaigns">Campaigns</Link>
+        <Link href="/get-involved">Get Involved</Link>
+        <Link href="/donate">Donate</Link>
+        <Link href="/contact">Contact</Link>
+      </div>
+    </nav>
+  );
+}
+module.exports = {
+  reactStrictMode: true,
+};
+{
+  "name": "rtc-website",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "14.2.3",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tailwindcss": "3.4.1",
+    "postcss": "8.4.31",
+    "autoprefixer": "10.4.16"
+  }import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+
+export default function About() {
+  return (
+    <div className="bg-white text-gray-900">
+      <Navbar />
+      <main className="py-12 px-6 max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold text-rtcBurgundy">About Us</h1>
+        <p className="mt-4">
+          Restore Their Childhood (RTC) is an international movement focused on protecting 
+          children’s welfare and digital safety. We aim to reduce the negative impact of 
+          excessive screen exposure and restore the balance between online and offline life.
+        </p>
+        <p className="mt-2">
+          Our vision is to create a healthier, happier world where children thrive in safe, 
+          nurturing environments supported by parents, schools, and global partners.
+        </p>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+
+export default function Campaigns() {
+  return (
+    <div className="bg-white text-gray-900">
+      <Navbar />
+      <main className="py-12 px-6 max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-rtcBurgundy">Our Campaigns</h1>
+        <div className="mt-6 space-y-4">
+          <div>
+            <h2 className="text-2xl font-semibold text-rtcGold">#BringBackPlay</h2>
+            <p>Encouraging physical play and offline fun to support healthy child development.</p>
+          </div>
+          <div>
+            <h2 className="text-2xl font-semibold text-rtcGold">#BreatheAndReboot</h2>
+            <p>Helping families reset by promoting wellness and reducing digital overload.</p>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import Chatbot from "../components/Chatbot";
+
+export default function Contact() {
+  return (
+    <div className="bg-white text-gray-900">
+      <Navbar />
+      <main className="py-12 px-6 max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold text-rtcBurgundy">Contact Us</h1>
+        <p className="mt-4">Reach out for inquiries, partnerships, or support.</p>
+        <form className="mt-6 space-y-4">
+          <input type="text" placeholder="Your Name" className="w-full border p-2 rounded" />
+          <input type="email" placeholder="Your Email" className="w-full border p-2 rounded" />
+          <textarea placeholder="Your Message" className="w-full border p-2 rounded"></textarea>
+          <button type="submit" className="bg-rtcGold text-white px-6 py-2 rounded-lg">Send</button>
+        </form>
+      </main>
+      <Chatbot />
+      <Footer />
+    </div>
+  );
+}
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+
+export default function Donate() {
+  return (
+    <div className="bg-white text-gray-900">
+      <Navbar />
+      <main className="py-12 px-6 max-w-3xl mx-auto text-center">
+        <h1 className="text-3xl font-bold text-rtcBurgundy">Donate</h1>
+        <p className="mt-4">Your donations help us create real change for children worldwide.</p>
+        <div className="mt-6">
+          <button className="bg-rtcGold text-white px-6 py-3 rounded-lg shadow-md">
+            Donate Now
+          </button>
+        </div>
+        <p className="mt-2 text-sm text-gray-600">Payment integration coming soon.</p>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+
+export default function GetInvolved() {
+  return (
+    <div className="bg-white text-gray-900">
+      <Navbar />
+      <main className="py-12 px-6 max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold text-rtcBurgundy">Get Involved</h1>
+        <p className="mt-4">
+          Join us in making a difference! You can support RTC through volunteering, 
+          corporate partnerships, or spreading awareness of our mission.
+        </p>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+
+export default function Home() {
+  return (
+    <div className="bg-white text-gray-900">
+      <Navbar />
+      <main className="text-center py-20 px-6">
+        <h1 className="text-4xl font-bold text-rtcBurgundy">
+          Restore Their Childhood
+        </h1>
+        <p className="mt-4 max-w-2xl mx-auto text-lg">
+          Advocating for children’s digital safety, mental wellness, and the right to play. 
+          Join us in building a future where children thrive offline and online.
+        </p>
+        <div className="mt-6 space-x-4">
+          <a href="/donate" className="bg-rtcGold text-white px-6 py-3 rounded-lg shadow-md">Donate</a>
+          <a href="/campaigns" className="border border-rtcGold text-rtcGold px-6 py-3 rounded-lg">Our Campaigns</a>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+}@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: white;
+  color: #333;
+  font-family: 'Inter', sans-serif;
+}
+module.exports = {
+  content: [
+    "./pages/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        rtcBurgundy: "#800020",
+        rtcGold: "#D4AF37",
+      },
+    },
+  },
+  plugins: [],
+};
