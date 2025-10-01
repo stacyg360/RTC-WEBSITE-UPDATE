@@ -1,66 +1,105 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from 'react';
 
-export default function Chatbot() {
-  const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hi! How can we help you today?" }
-  ]);
-  const [input, setInput] = useState("");
+export default function Chatbot(){
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([{from:'bot', text:'Hi — I\'m the RTC assistant. Ask me about campaigns, tips, or how to support RTC.'}]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const messagesRef = useRef();
 
-  const sendMessage = () => {
-    if (!input) return;
-    setMessages([...messages, { sender: "user", text: input }]);
-    setInput("");
-  };
+  useEffect(()=>{ if(messagesRef.current) messagesRef.current.scrollTop = messagesRef.current.scrollHeight }, [messages, open]);
+
+  async function send(){
+    if(!input.trim()) return;
+    const user = {from:'user', text: input};
+    setMessages(prev=>[...prev, user]);
+    setInput('');
+    setLoading(true);
+    try{
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({message: input})
+      });
+      const data = await res.json();
+      const bot = {from:'bot', text: data.reply || 'Sorry, I could not respond right now.'};
+      setMessages(prev=>[...prev, bot]);
+    }catch(e){
+      setMessages(prev=>[...prev, {from:'bot', text:'Chat service offline. Please try later.'}]);
+    }finally{ setLoading(false); }
+  }
 
   return (
-    <div className="fixed bottom-6 right-6 bg-white border border-rtcGold rounded-lg w-72 shadow-lg p-4">
-      <h2 className="font-bold text-rtcBurgundy">RTC Chatbot</h2>
-      <div className="h-40 overflow-y-auto my-2 text-sm">
-        {messages.map((msg, i) => (
-          <div key={i} className={msg.sender === "bot" ? "text-rtcBurgundy" : "text-gray-700"}>
-            <strong>{msg.sender}:</strong> {msg.text}
+    <>
+      <div className="fixed right-6 bottom-6 z-50">
+        <button onClick={()=>setOpen(o=>!o)} className="px-4 py-2 rounded-full bg-rtcBurgundy text-white shadow-lg">{open ? 'Close' : 'Chat with RTC'}</button>
+      </div>
+
+      {open && (
+        <div className="fixed right-6 bottom-20 w-80 bg-white border rounded shadow-lg z-50">
+          <div className="p-3 border-b font-semibold">RTC Assistant</div>
+          <div className="p-3 h-56 overflow-y-auto" ref={messagesRef}>
+            {messages.map((m,i)=>(
+              <div key={i} className={`mb-3 ${m.from==='bot' ? 'text-left' : 'text-right'}`}>
+                <div className={`inline-block p-2 rounded ${m.from==='bot' ? 'bg-gray-100' : 'bg-rtcBurgundy text-white'}`}>{m.text}</div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <div className="flex">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="border p-2 flex-grow rounded-l-md text-sm"
-          placeholder="Type a message..."
-        />
-        <button onClick={sendMessage} className="bg-rtcGold text-white px-3 rounded-r-md">Send</button>
-      </div>
-    </div>
-  );
+          <div className="p-3 border-t">
+            <div className="flex gap-2">
+              <input value={input} onChange={e=>setInput(e.target.value)} className="flex-1 p-2 border rounded" placeholder="Ask a question..." />
+              <button onClick={send} className="px-3 py-2 bg-rtcGold text-rtcBurgundy rounded" disabled={loading}>{loading ? '...' : 'Send'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
 }
-export default function Footer() {
-  return (
-    <footer className="bg-rtcBurgundy text-white py-6 text-center mt-12">
-      <p>&copy; {new Date().getFullYear()} Restore Their Childhood. All rights reserved.</p>
-    </footer>
-  );
-}
-import Link from "next/link";
 
-export default function Navbar() {
+export default function Footer(){
   return (
-    <nav className="bg-rtcBurgundy text-white p-4 flex justify-between">
-      <h1 className="font-bold">RTC</h1>
-      <div className="space-x-4">
-        <Link href="/">Home</Link>
-        <Link href="/about">About</Link>
-        <Link href="/campaigns">Campaigns</Link>
-        <Link href="/get-involved">Get Involved</Link>
-        <Link href="/donate">Donate</Link>
-        <Link href="/contact">Contact</Link>
+    <footer className="bg-gray-100 mt-12">
+      <div className="max-w-6xl mx-auto px-6 py-8 text-sm text-gray-600">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="font-semibold text-rtcBurgundy">Restore Their Childhood (RTC)</div>
+            <div className="mt-2">Protecting children’s digital wellness. Follow us on social media.</div>
+          </div>
+          <div>
+            <div className="font-semibold">Contact</div>
+            <div className="mt-2">info@restoretheirchildhood.org</div>
+          </div>
+        </div>
+        <div className="mt-6 text-xs text-gray-500">© {new Date().getFullYear()} Restore Their Childhood. All rights reserved.</div>
+      </div>
+    </footer>
+  )
+}
+
+import Link from 'next/link'
+
+export default function Navbar(){
+  return (
+    <nav className="bg-rtcBurgundy text-white p-4">
+      <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-rtcWhite flex items-center justify-center text-rtcBurgundy font-bold">RTC</div>
+          <div className="text-lg font-semibold">Restore Their Childhood</div>
+        </div>
+        <div className="hidden md:flex gap-6 items-center">
+          <Link href="/"><a className="hover:underline">Home</a></Link>
+          <Link href="/about"><a className="hover:underline">About</a></Link>
+          <Link href="/campaigns"><a className="hover:underline">Campaigns</a></Link>
+          <Link href="/get-involved"><a className="hover:underline">Get Involved</a></Link>
+          <Link href="/donate"><a className="px-3 py-2 bg-rtcGold text-rtcBurgundy rounded-md">Donate</a></Link>
+        </div>
       </div>
     </nav>
-  );
+  )
 }
-module.exports = {
-  reactStrictMode: true,
-};
+
+module.exports = { reactStrictMode: true };
 {
   "name": "rtc-website",
   "version": "1.0.0",
@@ -72,159 +111,213 @@ module.exports = {
   },
   "dependencies": {
     "next": "14.2.3",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "swr": "2.2.0"
+  },
+  "devDependencies": {
     "tailwindcss": "3.4.1",
     "postcss": "8.4.31",
     "autoprefixer": "10.4.16"
-  }import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+  }import '../styles/globals.css'
+import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
+import Chatbot from '../components/Chatbot'
 
-export default function About() {
+export default function App({ Component, pageProps }){
   return (
-    <div className="bg-white text-gray-900">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="py-12 px-6 max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-rtcBurgundy">About Us</h1>
-        <p className="mt-4">
-          Restore Their Childhood (RTC) is an international movement focused on protecting 
-          children’s welfare and digital safety. We aim to reduce the negative impact of 
-          excessive screen exposure and restore the balance between online and offline life.
-        </p>
-        <p className="mt-2">
-          Our vision is to create a healthier, happier world where children thrive in safe, 
-          nurturing environments supported by parents, schools, and global partners.
-        </p>
+      <main className="flex-1">
+        <Component {...pageProps} />
       </main>
       <Footer />
-    </div>
-  );
-}
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-
-export default function Campaigns() {
-  return (
-    <div className="bg-white text-gray-900">
-      <Navbar />
-      <main className="py-12 px-6 max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-rtcBurgundy">Our Campaigns</h1>
-        <div className="mt-6 space-y-4">
-          <div>
-            <h2 className="text-2xl font-semibold text-rtcGold">#BringBackPlay</h2>
-            <p>Encouraging physical play and offline fun to support healthy child development.</p>
-          </div>
-          <div>
-            <h2 className="text-2xl font-semibold text-rtcGold">#BreatheAndReboot</h2>
-            <p>Helping families reset by promoting wellness and reducing digital overload.</p>
-          </div>
-        </div>
-      </main>
-      <Footer />
-    </div>
-  );
-}
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import Chatbot from "../components/Chatbot";
-
-export default function Contact() {
-  return (
-    <div className="bg-white text-gray-900">
-      <Navbar />
-      <main className="py-12 px-6 max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-rtcBurgundy">Contact Us</h1>
-        <p className="mt-4">Reach out for inquiries, partnerships, or support.</p>
-        <form className="mt-6 space-y-4">
-          <input type="text" placeholder="Your Name" className="w-full border p-2 rounded" />
-          <input type="email" placeholder="Your Email" className="w-full border p-2 rounded" />
-          <textarea placeholder="Your Message" className="w-full border p-2 rounded"></textarea>
-          <button type="submit" className="bg-rtcGold text-white px-6 py-2 rounded-lg">Send</button>
-        </form>
-      </main>
       <Chatbot />
-      <Footer />
     </div>
-  );
+  )
 }
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
 
-export default function Donate() {
+export default function About(){
   return (
-    <div className="bg-white text-gray-900">
-      <Navbar />
-      <main className="py-12 px-6 max-w-3xl mx-auto text-center">
-        <h1 className="text-3xl font-bold text-rtcBurgundy">Donate</h1>
-        <p className="mt-4">Your donations help us create real change for children worldwide.</p>
-        <div className="mt-6">
-          <button className="bg-rtcGold text-white px-6 py-3 rounded-lg shadow-md">
-            Donate Now
-          </button>
+    <div className="max-w-4xl mx-auto px-6 py-12">
+      <h1 className="text-3xl font-bold text-rtcBurgundy">About Restore Their Childhood</h1>
+      <p className="mt-4">Restore Their Childhood (RTC) is a global movement fighting for children's right to safe, playful, and mentally nourishing childhoods. We provide resources, run campaigns, and partner with schools and brands.</p>
+
+      <h2 className="mt-8 text-2xl font-semibold">Our Approach</h2>
+      <ul className="list-disc ml-6 mt-2">
+        <li>Research & community education</li>
+        <li>Campaigns that change behaviour</li>
+        <li>Partnerships with schools, export default async function handler(req, res){
+  if(req.method !== 'POST') return res.status(405).json({error:'Method not allowed'});
+  const { message } = req.body || {};
+  if(!message) return res.status(400).json({error:'Message required'});
+
+  const hfKey = process.env.HUGGINGFACE_API_KEY;
+  if(!hfKey){
+    const lower = message.toLowerCase();
+    if(lower.includes('donat') || lower.includes('support')) return res.status(200).json({reply:'Thank you for wanting to support RTC — please visit our Donate page.'});
+    if(lower.includes('screen') || lower.includes('time')) return res.status(200).json({reply:'Try short screen breaks, schedule outdoor play, and the 20-20-20 rule for eyes.'});
+    return res.status(200).json({reply:`We received: "${message}". RTC team will follow up.`});
+  }
+
+  try{
+    const resp = await fetch('https://api-inference.huggingface.co/models/google/flan-t5-small', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${hfKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({inputs: message})
+    });
+    if(!resp.ok){
+      const text = await resp.text();
+      return res.status(200).json({reply:'AI service error — fallback reply: ' + text});
+    }
+    const data = await resp.json();
+    const reply = Array.isArray(data) ? (data[0].generated_text || data[0].summary_text || JSON.stringify(data[0])) : (data.generated_text || JSON.stringify(data));
+    return res.status(200).json({reply});
+  }catch(e){
+    return res.status(200).json({reply:'Chat service failed, please try again later.'});
+  }
+}
+
+export default function Campaigns(){
+  return (
+    <div className="max-w-5xl mx-auto px-6 py-12">
+      <h1 className="text-3xl font-bold text-rtcBurgundy">Campaigns</h1>
+
+      <section className="mt-6 grid md:grid-cols-2 gap-6">
+        <article className="p-6 border rounded">
+          <h2 className="text-2xl font-semibold text-rtcGold">#BringBackPlay</h2>
+          <p className="mt-2">We organise local play days, partner with toy companies and create resources for parents to encourage offline play.</p>
+        </article>
+
+        <article className="p-6 border rounded">
+          <h2 className="text-2xl font-semibold text-rtcGold">#BreatheAndReboot</h2>
+          <p className="mt-2">Mindfulness, screen breaks and routines that help families regain balance.</p>
+        </article>
+      </section>
+    </div>
+  )
+}
+
+export default function Contact(){
+  return (
+    <div className="max-w-3xl mx-auto px-6 py-12">
+      <h1 className="text-3xl font-bold text-rtcBurgundy">Contact Us</h1>
+      <p className="mt-4">Email: info@restoretheirchildhood.org</p>
+    </div>
+  )
+}
+
+export default function Donate(){
+  return (
+    <div className="max-w-3xl mx-auto px-6 py-12 text-center">
+      <h1 className="text-3xl font-bold text-rtcBurgundy">Donate to RTC</h1>
+      <p className="mt-4">Your support funds workshops, guides, and community programs that restore children's right to play.</p>
+      <div className="mt-6">
+        <button className="bg-rtcGold text-rtcBurgundy px-6 py-3 rounded-md shadow">Donate (Placeholder)</button>
+      </div>
+    </div>
+  )
+}
+
+export default function GetInvolved(){
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-12">
+      <h1 className="text-3xl font-bold text-rtcBurgundy">Get Involved</h1>
+      <p className="mt-4">Support RTC by volunteering, partnering, or spreading the word. We welcome parents, youth leaders, schools and brands.</p>
+
+      <div className="mt-6 grid md:grid-cols-3 gap-4">
+        <div className="p-4 border rounded">
+          <h3 className="font-semibold">Volunteer</h3>
+          <p className="mt-2 text-sm">Help run local events and workshops.</p>
         </div>
-        <p className="mt-2 text-sm text-gray-600">Payment integration coming soon.</p>
-      </main>
-      <Footer />
-    </div>
-  );
-}
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-
-export default function GetInvolved() {
-  return (
-    <div className="bg-white text-gray-900">
-      <Navbar />
-      <main className="py-12 px-6 max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-rtcBurgundy">Get Involved</h1>
-        <p className="mt-4">
-          Join us in making a difference! You can support RTC through volunteering, 
-          corporate partnerships, or spreading awareness of our mission.
-        </p>
-      </main>
-      <Footer />
-    </div>
-  );
-}
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-
-export default function Home() {
-  return (
-    <div className="bg-white text-gray-900">
-      <Navbar />
-      <main className="text-center py-20 px-6">
-        <h1 className="text-4xl font-bold text-rtcBurgundy">
-          Restore Their Childhood
-        </h1>
-        <p className="mt-4 max-w-2xl mx-auto text-lg">
-          Advocating for children’s digital safety, mental wellness, and the right to play. 
-          Join us in building a future where children thrive offline and online.
-        </p>
-        <div className="mt-6 space-x-4">
-          <a href="/donate" className="bg-rtcGold text-white px-6 py-3 rounded-lg shadow-md">Donate</a>
-          <a href="/campaigns" className="border border-rtcGold text-rtcGold px-6 py-3 rounded-lg">Our Campaigns</a>
+        <div className="p-4 border rounded">
+          <h3 className="font-semibold">Partner</h3>
+          <p className="mt-2 text-sm">Collaborate on campaigns and research.</p>
         </div>
-      </main>
-      <Footer />
+        <div className="p-4 border rounded">
+          <h3 className="font-semibold">Donate</h3>
+          <p className="mt-2 text-sm">Support our programs and outreach.</p>
+        </div>
+      </div>
     </div>
-  );
+  )
 }
+
+import Link from 'next/link'
+
+export default function Home(){
+  return (
+    <div>
+      <section className="relative">
+        <div className="h-72 md:h-96 bg-cover bg-center" style={{backgroundImage: 'url(/placeholder.jpg)'}}>
+          <div className="h-full flex items-center">
+            <div className="max-w-6xl mx-auto px-6">
+              <div className="hero-overlay p-8 rounded text-white max-w-2xl">
+                <h1 className="text-3xl md:text-5xl font-bold">Restore Their Childhood</h1>
+                <p className="mt-4">Protecting children’s futures in a digital-first world. Join RTC to reduce screen dependency and bring back real play.</p>
+                <div className="mt-6 flex gap-3">
+                  <Link href="/get-involved"><a className="px-4 py-2 bg-rtcGold rounded text-rtcBurgundy font-semibold">Get Involved</a></Link>
+                  <Link href="/campaigns"><a className="px-4 py-2 border border-white rounded">Our Campaigns</a></Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 py-12">
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="p-6 border rounded">
+            <h3 className="font-semibold">Who We Are</h3>
+            <p className="mt-2 text-sm">RTC empowers parents, schools and communities to restore balance in children’s lives.</p>
+          </div>
+          <div className="p-6 border rounded">
+            <h3 className="font-semibold">Our Mission</h3>
+            <p className="mt-2 text-sm">Protect mental health, promote play and create safe digital spaces worldwide.</p>
+          </div>
+          <div className="p-6 border rounded">
+            <h3 className="font-semibold">Get Updates</h3>
+            <p className="mt-2 text-sm">Sign up to receive guides, tips and invites to RTC events.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 module.exports = {
   plugins: {
     tailwindcss: {},
     autoprefixer: {},
   },
 };
-}@tailwind base;
+brands and policy makers</li>
+      </ul>
+    </div>
+  )
+}
+
+}# RTC - HARDCORE Starter
+
+Next.js + Tailwind starter for Restore Their Childhood. Chatbot connects to Hugging Face inference API when HUGGINGFACE_API_KEY env var is set.
+
+Deploy: push to GitHub and import to Vercel. Set HUGGINGFACE_API_KEY in Vercel env vars for AI replies.@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: white;
-  color: #333;
-  font-family: 'Inter', sans-serif;
+:root{
+  --rtc-burgundy: #800020;
+  --rtc-gold: #D4AF37;
+  --rtc-white: #FFFFFF;
 }
+
+html,body,#__next{height:100%}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial; background:var(--rtc-white); color:#111}
+.hero-overlay{background:linear-gradient(90deg, rgba(128,0,32,0.85), rgba(0,0,0,0.12));}
+
 module.exports = {
   content: [
     "./pages/**/*.{js,ts,jsx,tsx}",
@@ -235,8 +328,10 @@ module.exports = {
       colors: {
         rtcBurgundy: "#800020",
         rtcGold: "#D4AF37",
+        rtcWhite: "#FFFFFF"
       },
     },
   },
   plugins: [],
 };
+
